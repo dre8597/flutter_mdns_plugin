@@ -63,7 +63,7 @@ public class FlutterMdnsPlugin implements MethodCallHandler, FlutterPlugin {
     public FlutterMdnsPlugin() {
 
         mDiscoveredServices = new ArrayList<>();
-
+        System.out.println("We are beginning the search process");
         EventChannel serviceDiscoveredChannel = new EventChannel(pluginBinding.getBinaryMessenger(), NAMESPACE + "/discovered");
         mDiscoveredHandler = new ServiceDiscoveredHandler();
         serviceDiscoveredChannel.setStreamHandler(mDiscoveredHandler);
