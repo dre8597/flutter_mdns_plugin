@@ -1,5 +1,8 @@
 package eu.sndr.fluttermdnsplugin.handlers;
 
+
+import static android.app.PendingIntent.getActivity;
+
 import android.os.Handler;
 import android.os.Looper;
 import android.content.Context;
@@ -13,10 +16,10 @@ public class DiscoveryRunningHandler implements EventChannel.StreamHandler {
     EventChannel.EventSink sink;
     WifiManager.MulticastLock multicastLock;
 
-    public DiscoveryRunningHandler(Context context){
+    public DiscoveryRunningHandler(Context context) {
         this.handler = new Handler(Looper.getMainLooper());
 
-        WifiManager wifi = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+        WifiManager wifi = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         multicastLock = wifi.createMulticastLock("multicastLock");
         multicastLock.setReferenceCounted(true);
     }
@@ -31,12 +34,12 @@ public class DiscoveryRunningHandler implements EventChannel.StreamHandler {
 
     }
 
-    public void onDiscoveryStopped(){
+    public void onDiscoveryStopped() {
         multicastLock.release();
         handler.post(() -> sink.success(false));
     }
 
-    public void onDiscoveryStarted(){
+    public void onDiscoveryStarted() {
         multicastLock.acquire();
         handler.post(() -> sink.success(true));
     }
