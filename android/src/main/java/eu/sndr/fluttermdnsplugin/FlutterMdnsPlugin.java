@@ -23,7 +23,6 @@ import eu.sndr.fluttermdnsplugin.handlers.ServiceDiscoveredHandler;
 import eu.sndr.fluttermdnsplugin.handlers.ServiceLostHandler;
 import eu.sndr.fluttermdnsplugin.handlers.ServiceResolvedHandler;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
-import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.EventChannel;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
@@ -42,15 +41,35 @@ public class FlutterMdnsPlugin implements MethodCallHandler, FlutterPlugin {
     private ArrayList<NsdServiceInfo> mDiscoveredServices;
     private MethodChannel methodChannel;
     private Context applicationContext;
-    private FlutterPluginBinding pluginBinding;
+    EventChannel serviceDiscoveredChannel;
+    EventChannel serviceResolved;
+    EventChannel serviceLost;
+    EventChannel discoveryRunning;
 
     @Override
     public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
         this.applicationContext = flutterPluginBinding.getApplicationContext();
-        this.pluginBinding = flutterPluginBinding;
         methodChannel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), "flutter_mdns_plugin");
         methodChannel.setMethodCallHandler(this);
 
+        mDiscoveredServices = new ArrayList<>();
+        System.out.println("We are beginning the search process");
+
+        serviceDiscoveredChannel = new EventChannel(flutterPluginBinding.getBinaryMessenger(), NAMESPACE + "/discovered");
+        mDiscoveredHandler = new ServiceDiscoveredHandler();
+        serviceDiscoveredChannel.setStreamHandler(mDiscoveredHandler);
+
+        serviceResolved = new EventChannel(flutterPluginBinding.getBinaryMessenger(), NAMESPACE + "/resolved");
+        mResolvedHandler = new ServiceResolvedHandler();
+        serviceResolved.setStreamHandler(mResolvedHandler);
+
+        serviceLost = new EventChannel(flutterPluginBinding.getBinaryMessenger(), NAMESPACE + "/lost");
+        mLostHandler = new ServiceLostHandler();
+        serviceLost.setStreamHandler(mLostHandler);
+
+        discoveryRunning = new EventChannel(flutterPluginBinding.getBinaryMessenger(), NAMESPACE + "/running");
+        mDiscoveryRunningHandler = new DiscoveryRunningHandler(applicationContext);
+        discoveryRunning.setStreamHandler(mDiscoveryRunningHandler);
     }
 
     @Override
@@ -58,27 +77,18 @@ public class FlutterMdnsPlugin implements MethodCallHandler, FlutterPlugin {
         applicationContext = null;
         methodChannel.setMethodCallHandler(null);
         methodChannel = null;
+        serviceDiscoveredChannel.setStreamHandler(null);
+        serviceDiscoveredChannel = null;
+        discoveryRunning.setStreamHandler(null);
+        discoveryRunning = null;
+        serviceLost.setStreamHandler(null);
+        serviceLost = null;
+        serviceResolved.setStreamHandler(null);
+        serviceResolved = null;
+
     }
 
     public FlutterMdnsPlugin() {
-
-        mDiscoveredServices = new ArrayList<>();
-        System.out.println("We are beginning the search process");
-        EventChannel serviceDiscoveredChannel = new EventChannel(pluginBinding.getBinaryMessenger(), NAMESPACE + "/discovered");
-        mDiscoveredHandler = new ServiceDiscoveredHandler();
-        serviceDiscoveredChannel.setStreamHandler(mDiscoveredHandler);
-
-        EventChannel serviceResolved = new EventChannel(pluginBinding.getBinaryMessenger(), NAMESPACE + "/resolved");
-        mResolvedHandler = new ServiceResolvedHandler();
-        serviceResolved.setStreamHandler(mResolvedHandler);
-
-        EventChannel serviceLost = new EventChannel(pluginBinding.getBinaryMessenger(), NAMESPACE + "/lost");
-        mLostHandler = new ServiceLostHandler();
-        serviceLost.setStreamHandler(mLostHandler);
-
-        EventChannel discoveryRunning = new EventChannel(pluginBinding.getBinaryMessenger(), NAMESPACE + "/running");
-        mDiscoveryRunningHandler = new DiscoveryRunningHandler(applicationContext);
-        discoveryRunning.setStreamHandler(mDiscoveryRunningHandler);
 
     }
 
